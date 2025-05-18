@@ -8,7 +8,7 @@ import io
 from model import get_face_embeddings, build_faiss_index, search_faiss
 from storage import add_embeddings, get_db
 
-app = FastAPI()
+app = FastAPI(root_path="/api/recognition")
 STORAGE_DIR = "storage"
 os.makedirs(STORAGE_DIR, exist_ok=True)
 
