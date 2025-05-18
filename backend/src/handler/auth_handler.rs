@@ -13,7 +13,7 @@ use crate::helper::jwt::generate_jwt;
     )
 )]
 pub async fn register(Json(payload): Json<RegisterRequest>) -> impl IntoResponse {
-    println!("Register: {}", payload.username);
+    tracing::info!("Registering user: {:?}", payload);
     (StatusCode::CREATED, Json(json!({"message": "Registered"})))
 }
 
@@ -27,5 +27,7 @@ pub async fn register(Json(payload): Json<RegisterRequest>) -> impl IntoResponse
 )]
 pub async fn login(Json(payload): Json<LoginRequest>) -> impl IntoResponse {
     let token = generate_jwt(&payload.username);
+    tracing::info!("User logged in: {:?}", payload);
+    tracing::info!("Generated token: {:?}", token);
     (StatusCode::OK, Json(TokenResponse { access_token: token }))
 }

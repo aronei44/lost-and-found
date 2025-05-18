@@ -5,19 +5,19 @@ use utoipa::{
 };
 
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 pub struct RegisterRequest {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 pub struct TokenResponse {
     pub access_token: String,
 }
