@@ -1,7 +1,7 @@
 use axum::{Json, http::StatusCode};
 use axum::response::IntoResponse;
 use serde_json::json;
-use crate::model::user_model::{RegisterRequest, LoginRequest, TokenResponse, User};
+use crate::model::user_model::{RegisterRequest, LoginRequest, TokenResponse};
 use crate::helper::jwt::generate_jwt;
 use crate::data::user_data::{create_user, get_user_by_username, update_user_last_active, verify_password};
 

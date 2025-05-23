@@ -1,7 +1,6 @@
 use sqlx::postgres::PgPoolOptions;
 use dotenvy::dotenv;
 use std::env;
-
 pub async fn create_pool() -> sqlx::Result<sqlx::PgPool> {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");

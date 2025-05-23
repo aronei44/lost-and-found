@@ -11,6 +11,12 @@ use std::net::SocketAddr;
 
 // Import the Parser derive macro and trait from clap
 use clap::Parser;
+use std::path::Path;
+
+
+use sqlx::migrate::Migrator;
+
+static MIGRATOR: Migrator = sqlx::migrate!();
 
 /// Server CLI
 #[derive(Parser, Debug)]
@@ -18,7 +24,7 @@ struct Args {
     #[clap(long, default_value = "0.0.0.0")]
     host: String,
 
-    #[clap(long, default_value = "8000")]
+    #[clap(long, default_value = "8001")]
     port: u16,
 }
 
@@ -31,6 +37,25 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .init();
+
+    
+    let migration_flag = Path::new(".migrated");
+
+    if std::env::var("MIGRATION") == Ok("true".to_string()) && !migration_flag.exists() {
+        // Run migrations
+        let pool = helper::db::create_pool().await.unwrap_or_else(|err| {
+            eprintln!("Failed to create database pool: {}", err);
+            std::process::exit(1);
+        });
+        // Run migrations
+        MIGRATOR.run(&pool).await.unwrap_or_else(|err| {
+            eprintln!("Failed to run migrations: {}", err);
+        });
+
+        std::fs::write(migration_flag, "done").unwrap();
+    }
+
+
     let app = app::create_app();
     // Default values
     let args = Args::parse();
