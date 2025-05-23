@@ -3,6 +3,17 @@ use utoipa::{
     ToSchema,
     OpenApi
 };
+use chrono::NaiveDateTime;
+
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, sqlx::FromRow)]
+pub struct User {
+    pub id: i32,
+    pub username: String,
+    pub password: String,
+    pub created_at: Option<NaiveDateTime>,
+    pub last_active: Option<NaiveDateTime>,
+}
 
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]

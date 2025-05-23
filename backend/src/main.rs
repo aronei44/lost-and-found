@@ -3,6 +3,7 @@ mod handler;
 mod helper;
 mod model;
 mod route;
+mod data;
 
 use dotenvy::dotenv;
 use tracing_subscriber::EnvFilter;
