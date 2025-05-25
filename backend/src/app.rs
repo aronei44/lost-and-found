@@ -6,7 +6,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi; // Import the trait for openapi()
 
 use crate::route::routes;
-use crate::model::user_model::ApiDoc;
+use crate::api_doc::ApiDoc;
 use tower_http::trace::TraceLayer;
 
 pub fn create_app() -> Router<()> {

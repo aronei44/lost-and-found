@@ -4,6 +4,7 @@ mod helper;
 mod model;
 mod route;
 mod data;
+mod api_doc;
 
 use dotenvy::dotenv;
 use tracing_subscriber::EnvFilter;

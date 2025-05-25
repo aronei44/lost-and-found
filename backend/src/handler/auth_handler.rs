@@ -1,8 +1,8 @@
 use axum::{Json, http::StatusCode};
 use axum::response::IntoResponse;
 use serde_json::json;
-use crate::model::user_model::{RegisterRequest, LoginRequest, TokenResponse};
-use crate::helper::jwt::generate_jwt;
+use crate::model::user_model::{RegisterRequest, LoginRequest, TokenResponse, RefreshRequest};
+use crate::helper::jwt::{decode_jwt, generate_access_token, generate_refresh_token};
 use crate::data::user_data::{create_user, get_user_by_username, update_user_last_active, verify_password};
 
 #[utoipa::path(
@@ -83,6 +83,40 @@ pub async fn login(Json(payload): Json<LoginRequest>) -> impl IntoResponse {
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"})));
     }
     // Generate a JWT token
-    let token = generate_jwt(&payload.username);
-    (StatusCode::OK, Json(json!(TokenResponse { access_token: token })))
+    let token = generate_access_token(&payload.username);
+    let refresh_token = generate_refresh_token(&payload.username);
+    (StatusCode::OK, Json(json!(TokenResponse { access_token: token, refresh_token })))
+}
+
+
+
+#[utoipa::path(
+    post,
+    path = "/api/auth/refresh",
+    request_body = RefreshRequest,
+    responses(
+        (status = 200, description = "Token refreshed", body = TokenResponse),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+pub async fn refresh_token(
+    Json(payload): Json<RefreshRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+
+    let token_data = decode_jwt(&payload.refresh_token)
+        .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid refresh token".into()))?;
+
+    if token_data.claims.token_type != "refresh" {
+        return Err((StatusCode::UNAUTHORIZED, "Not a refresh token".into()));
+    }
+
+    let new_access = generate_access_token(&token_data.claims.sub);
+
+    Ok(Json(serde_json::json!({
+        "access_token": new_access,
+        "refresh_token": payload.refresh_token, // bisa juga generate baru
+    })))
 }

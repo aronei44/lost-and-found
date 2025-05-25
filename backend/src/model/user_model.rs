@@ -1,12 +1,9 @@
 use serde::{Serialize, Deserialize};
-use utoipa::{
-    ToSchema,
-    OpenApi
-};
+use utoipa::ToSchema;
 use chrono::NaiveDateTime;
 
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, sqlx::FromRow)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, sqlx::FromRow, Clone)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -31,18 +28,11 @@ pub struct LoginRequest {
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 pub struct TokenResponse {
     pub access_token: String,
+    pub refresh_token: String,
 }
 
+#[derive(Deserialize, Serialize, ToSchema, Debug)]
+pub struct RefreshRequest {
+    pub refresh_token: String,
+}
 
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        crate::handler::auth_handler::register,
-        crate::handler::auth_handler::login
-    ),
-    components(schemas(RegisterRequest, LoginRequest, TokenResponse)),
-    tags(
-        (name = "Auth", description = "Authentication endpoints")
-    )
-)]
-pub struct ApiDoc;
