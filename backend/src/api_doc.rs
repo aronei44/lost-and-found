@@ -6,13 +6,16 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
     paths(
         crate::handler::auth_handler::register,
         crate::handler::auth_handler::login,
-        crate::handler::auth_handler::refresh_token
+        crate::handler::auth_handler::refresh_token,
+        crate::handler::profile_handler::update_profile_handler
     ),
     components(schemas(
         crate::model::user_model::RegisterRequest, 
         crate::model::user_model::LoginRequest, 
         crate::model::user_model::TokenResponse, 
-        crate::model::user_model::RefreshRequest
+        crate::model::user_model::RefreshRequest,
+        crate::model::profile_model::ProfileResponse,
+        crate::model::profile_model::UpdateProfileRequest
     )),
     tags(
         (name = "Lost And Found", description = "gitulah")
