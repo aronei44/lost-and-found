@@ -1,9 +1,9 @@
 use axum::{Json, http::StatusCode};
 use axum::response::IntoResponse;
-use serde_json::json;
 use crate::model::user_model::{RegisterRequest, LoginRequest, TokenResponse, RefreshRequest};
 use crate::helper::jwt::{decode_jwt, generate_access_token, generate_refresh_token};
 use crate::data::user_data::{create_user, get_user_by_username, update_user_last_active, verify_password};
+use serde_json::json;
 
 #[utoipa::path(
     post,
@@ -19,10 +19,9 @@ pub async fn register(Json(payload): Json<RegisterRequest>) -> impl IntoResponse
     match get_user_by_username(&payload.username).await {
         Ok(_) => {
             tracing::warn!("User already exists: {:?}", payload.username);
-            return (StatusCode::BAD_REQUEST, Json(json!({"error": "User already exists"})));
+            return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "User already exists"})));
         }
         Err(_) => {
-            // User does not exist, proceed with registration
             tracing::info!("User does not exist, proceeding with registration");
         }
     }
@@ -32,14 +31,13 @@ pub async fn register(Json(payload): Json<RegisterRequest>) -> impl IntoResponse
     match user {
         Ok(user) => {
             tracing::info!("User created: {:?}", user);
-            (StatusCode::CREATED, Json(json!({"message": "Registered"})))
+            (StatusCode::CREATED, Json(serde_json::json!({"message": "Registered"})))
         }
         Err(e) => {
             tracing::error!("Error creating user: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"})));
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Internal server error"})));
         }
     }
-
 }
 
 #[utoipa::path(
@@ -50,45 +48,39 @@ pub async fn register(Json(payload): Json<RegisterRequest>) -> impl IntoResponse
         (status = 200, description = "Login success", body = TokenResponse)
     )
 )]
-pub async fn login(Json(payload): Json<LoginRequest>) -> impl IntoResponse {
+pub async fn login(Json(payload): Json<LoginRequest>) -> Result<Json<TokenResponse>, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!("Logging in user: {:?}", payload);
-    // Check if the user exists
-    let user_result = get_user_by_username(&payload.username).await;
-    let user = match user_result {
-        Ok(user) => {
-            tracing::info!("User found: {:?}", user);
-            // Check if the password is correct
-            match verify_password(&payload.password, &user.password).await {
-                Ok(valid) => {
-                    if !valid {
-                        tracing::warn!("Invalid password for user: {:?}", payload.username);
-                        return (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid credentials"})));
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("Error verifying password: {:?}", e);
-                    return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"})));
-                }
-            }
-            user
-        }
+
+    let user = match get_user_by_username(&payload.username).await {
+        Ok(user) => user,
         Err(_) => {
             tracing::warn!("User not found: {:?}", payload.username);
-            return (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid credentials"})));
+            return Err((StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid credentials"}))));
         }
     };
-    // Update the user's last active time
+
+    match verify_password(&payload.password, &user.password).await {
+        Ok(valid) if valid => (),
+        Ok(_) => {
+            tracing::warn!("Invalid password for user: {:?}", payload.username);
+            return Err((StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid credentials"}))));
+        }
+        Err(e) => {
+            tracing::error!("Error verifying password: {:?}", e);
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"}))));
+        }
+    }
+
     if let Err(e) = update_user_last_active(user.id).await {
         tracing::error!("Error updating last active time: {:?}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"})));
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"}))));
     }
-    // Generate a JWT token
-    let token = generate_access_token(&payload.username);
+
+    let access_token = generate_access_token(&payload.username);
     let refresh_token = generate_refresh_token(&payload.username);
-    (StatusCode::OK, Json(json!(TokenResponse { access_token: token, refresh_token })))
+
+    Ok(Json(TokenResponse { access_token, refresh_token }))
 }
-
-
 
 #[utoipa::path(
     post,
@@ -104,7 +96,7 @@ pub async fn login(Json(payload): Json<LoginRequest>) -> impl IntoResponse {
 )]
 pub async fn refresh_token(
     Json(payload): Json<RefreshRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<TokenResponse>, (StatusCode, String)> {
 
     let token_data = decode_jwt(&payload.refresh_token)
         .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid refresh token".into()))?;
@@ -115,8 +107,9 @@ pub async fn refresh_token(
 
     let new_access = generate_access_token(&token_data.claims.sub);
 
-    Ok(Json(serde_json::json!({
-        "access_token": new_access,
-        "refresh_token": payload.refresh_token, // bisa juga generate baru
-    })))
+    // Kembaliannya juga TokenResponse langsung
+    Ok(Json(TokenResponse {
+        access_token: new_access,
+        refresh_token: payload.refresh_token.clone(), // bisa juga generate baru
+    }))
 }

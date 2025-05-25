@@ -31,7 +31,7 @@ pub struct TokenResponse {
     pub refresh_token: String,
 }
 
-#[derive(Deserialize, Serialize, ToSchema, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug)]
 pub struct RefreshRequest {
     pub refresh_token: String,
 }

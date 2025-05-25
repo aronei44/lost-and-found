@@ -1,5 +1,5 @@
-use utoipa::OpenApi;
-
+use utoipa::{OpenApi, Modify};
+use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -15,7 +15,27 @@ use utoipa::OpenApi;
         crate::model::user_model::RefreshRequest
     )),
     tags(
-        (name = "Auth", description = "Authentication endpoints")
+        (name = "Lost And Found", description = "gitulah")
     ),
+    modifiers(&SecurityAddon)
 )]
 pub struct ApiDoc;
+
+
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let mut components = openapi.components.clone().unwrap_or_default();
+        components.security_schemes.insert(
+            "bearer_auth".to_string(),
+            SecurityScheme::Http(
+                HttpBuilder::new()
+                    .scheme(HttpAuthScheme::Bearer)
+                    .bearer_format("JWT")
+                    .build(),
+            ),
+        );
+        openapi.components = Some(components);
+    }
+}
