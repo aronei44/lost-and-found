@@ -5,7 +5,6 @@ use chrono::NaiveDateTime;
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, sqlx::FromRow, Clone)]
 pub struct User {
-    pub id: i32,
     pub username: String,
     pub password: String,
     pub created_at: Option<NaiveDateTime>,

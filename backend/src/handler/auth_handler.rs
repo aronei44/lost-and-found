@@ -71,7 +71,7 @@ pub async fn login(Json(payload): Json<LoginRequest>) -> Result<Json<TokenRespon
         }
     }
 
-    if let Err(e) = update_user_last_active(user.id).await {
+    if let Err(e) = update_user_last_active(&user.username).await {
         tracing::error!("Error updating last active time: {:?}", e);
         return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "Internal server error"}))));
     }

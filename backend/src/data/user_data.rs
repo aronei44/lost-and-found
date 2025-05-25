@@ -8,7 +8,7 @@ pub async fn get_user_by_username(username: &str) -> sqlx::Result<User> {
     let user = sqlx::query_as!(
         User,
         r#"
-        SELECT id, username, password, created_at, last_active
+        SELECT username, password, created_at, last_active
         FROM users
         WHERE username = $1
         "#,
@@ -28,7 +28,7 @@ pub async fn create_user(username: &str, password: &str) -> sqlx::Result<User> {
         r#"
         INSERT INTO users (username, password)
         VALUES ($1, $2)
-        RETURNING id, username, password, created_at, last_active
+        RETURNING username, password, created_at, last_active
         "#,
         username,
         hashed_password
@@ -38,15 +38,15 @@ pub async fn create_user(username: &str, password: &str) -> sqlx::Result<User> {
     Ok(user)
 }
 
-pub async fn update_user_last_active(user_id: i32) -> sqlx::Result<()> {
+pub async fn update_user_last_active(username: &str) -> sqlx::Result<()> {
     let pool = create_pool().await?;
     sqlx::query!(
         r#"
         UPDATE users
         SET last_active = NOW()
-        WHERE id = $1
+        WHERE username = $1
         "#,
-        user_id
+        username
     )
     .execute(&pool)
     .await?;
