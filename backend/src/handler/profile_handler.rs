@@ -1,13 +1,11 @@
 use axum::{
     Json, 
-    http::{
-        StatusCode,
-        header::HeaderMap
-    }
+    http::StatusCode
 };
-use crate::{helper::jwt::get_user_from_header, model::profile_model::{ProfileResponse, UpdateProfileRequest}};
+use crate::model::profile_model::{ProfileResponse, UpdateProfileRequest};
 use crate::data::profile_data::{create_profile, get_profile_by_username, update_profile};
-
+use axum::extract::Extension;
+use crate::model::user_model::User;
 #[utoipa::path(
     put,
     path = "/api/profile",
@@ -19,13 +17,11 @@ use crate::data::profile_data::{create_profile, get_profile_by_username, update_
         ("bearer_auth" = [])
     )
 )]
-pub async fn update_profile_handler( header: HeaderMap, Json(payload): Json<UpdateProfileRequest>) -> Result<Json<ProfileResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let user = get_user_from_header(header)
-        .map_err(|_| (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "Unauthorized"}))))?;
+pub async fn update_profile_handler( Extension(current_user): Extension<User>, Json(payload): Json<UpdateProfileRequest>) -> Result<Json<ProfileResponse>, (StatusCode, Json<serde_json::Value>)> {
 
-    match get_profile_by_username(&user.claims.username).await {
+    match get_profile_by_username(&current_user.username).await {
         Ok(_) => {
-            let updated_profile = update_profile(&user.claims.username, &payload).await.map_err(|e| {
+            let updated_profile = update_profile(&current_user.username, &payload).await.map_err(|e| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(serde_json::json!({"error": e.to_string()})),
@@ -40,7 +36,7 @@ pub async fn update_profile_handler( header: HeaderMap, Json(payload): Json<Upda
             }))
         },
         Err(_) => {
-            let new_profile = create_profile(&user.claims.username, &payload).await.map_err(|e| {
+            let new_profile = create_profile(&current_user.username, &payload).await.map_err(|e| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(serde_json::json!({"error": e.to_string()})),
