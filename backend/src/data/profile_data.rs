@@ -18,7 +18,7 @@ pub async fn get_profile_by_username(username: &str) -> sqlx::Result<Profile> {
     Ok(user)
 }
 
-pub async fn update_profile(data: &UpdateProfileRequest) -> sqlx::Result<Profile> {
+pub async fn update_profile(username: &str, data: &UpdateProfileRequest) -> sqlx::Result<Profile> {
     let pool = create_pool().await?;
     // Hash the password before storing it
     let user = sqlx::query_as!(
@@ -29,7 +29,7 @@ pub async fn update_profile(data: &UpdateProfileRequest) -> sqlx::Result<Profile
         WHERE username = $1
         RETURNING username, full_name, email, phone, address
         "#,
-        data.username,
+        username,
         data.full_name,
         data.email,
         data.phone,
@@ -40,7 +40,7 @@ pub async fn update_profile(data: &UpdateProfileRequest) -> sqlx::Result<Profile
     Ok(user)
 }
 
-pub async fn create_profile(data: &UpdateProfileRequest) -> sqlx::Result<Profile> {
+pub async fn create_profile(username: &str, data: &UpdateProfileRequest) -> sqlx::Result<Profile> {
     let pool = create_pool().await?;
     // Hash the password before storing it
     let user = sqlx::query_as!(
@@ -50,7 +50,7 @@ pub async fn create_profile(data: &UpdateProfileRequest) -> sqlx::Result<Profile
         VALUES ($1, $2, $3, $4, $5)
         RETURNING username, full_name, email, phone, address
         "#,
-        data.username,
+        username,
         data.full_name,
         data.email,
         data.phone,
