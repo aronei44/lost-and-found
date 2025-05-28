@@ -4,3 +4,4 @@
 *.pyc
 face_db.pkl
 /storage
+.env
