@@ -7,7 +7,8 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::handler::auth_handler::register,
         crate::handler::auth_handler::login,
         crate::handler::auth_handler::refresh_token,
-        crate::handler::profile_handler::update_profile_handler
+        crate::handler::profile_handler::update_profile_handler,
+        crate::handler::profile_handler::get_profile_handler
     ),
     components(schemas(
         crate::model::user_model::RegisterRequest, 
