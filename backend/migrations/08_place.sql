@@ -4,7 +4,7 @@
 CREATE SEQUENCE IF NOT EXISTS place_id_seq;
 
 -- Table Definition
-CREATE TABLE place (
+CREATE TABLE places (
     "id" int4 NOT NULL DEFAULT nextval('place_id_seq'::regclass),
     "user_username" varchar(48) NOT NULL,
     "latitude" text NOT NULL,

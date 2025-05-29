@@ -4,7 +4,7 @@
 CREATE SEQUENCE IF NOT EXISTS photo_id_seq;
 
 -- Table Definition
-CREATE TABLE photo (
+CREATE TABLE photos (
     "id" int4 NOT NULL DEFAULT nextval('photo_id_seq'::regclass),
     "bucket" varchar(48) NOT NULL,
     "path" text NOT NULL,

@@ -14,7 +14,12 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::handler::lost_people_handler::create_person_handler,
         crate::handler::lost_people_handler::update_person_handler,
         crate::handler::lost_people_handler::add_monitoring_handler,
-        crate::handler::lost_people_handler::get_all_lost_people_handler
+        crate::handler::lost_people_handler::get_all_lost_people_handler,
+        crate::handler::data_handler::get_photos_by_person_id_handler,
+        crate::handler::data_handler::get_places_by_person_id_handler,
+        crate::handler::data_handler::get_photos_by_person_id_and_place_id_handler,
+        crate::handler::data_handler::get_photos_with_lost_by_username_handler,
+        crate::handler::data_handler::upload_photo_handler
     ),
     components(schemas(
         crate::model::user_model::RegisterRequest, 
@@ -25,7 +30,14 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::model::profile_model::UpdateProfileRequest,
         crate::model::lost_people_model::LostPeople,
         crate::model::lost_people_model::CreateLostPeopleRequest,
-        crate::model::lost_people_model::UpdateLostPeopleRequest
+        crate::model::lost_people_model::UpdateLostPeopleRequest,
+        crate::model::photo_model::Photo,
+        crate::model::photo_model::CreatePhoto,
+        crate::model::photo_model::PhotoWithLostPeople,
+        crate::model::photo_data_model::PhotoData,
+        crate::model::photo_data_model::CreatePhotoData,
+        crate::model::place_model::Place,
+        crate::model::place_model::CreatePlace
     )),
     tags(
         (name = "Lost And Found", description = "gitulah")

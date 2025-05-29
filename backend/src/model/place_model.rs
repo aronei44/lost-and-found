@@ -1,6 +1,5 @@
 use serde::{Serialize, Deserialize};
 use utoipa::ToSchema;
-use crate::model::user_model::User;
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, sqlx::FromRow, Clone)]
 pub struct Place {
@@ -8,8 +7,7 @@ pub struct Place {
     pub user_username: String,
     pub latitude: String,
     pub longitude: String,
-    pub created_at: Option<chrono::NaiveDateTime>,
-    pub user: Option<User>,
+    pub created_at: Option<chrono::NaiveDateTime>
 }
 
 
