@@ -8,7 +8,13 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::handler::auth_handler::login,
         crate::handler::auth_handler::refresh_token,
         crate::handler::profile_handler::update_profile_handler,
-        crate::handler::profile_handler::get_profile_handler
+        crate::handler::profile_handler::get_profile_handler,
+        crate::handler::lost_people_handler::get_monitored_people_handler,
+        crate::handler::lost_people_handler::get_person_by_id_handler,
+        crate::handler::lost_people_handler::create_person_handler,
+        crate::handler::lost_people_handler::update_person_handler,
+        crate::handler::lost_people_handler::add_monitoring_handler,
+        crate::handler::lost_people_handler::get_all_lost_people_handler
     ),
     components(schemas(
         crate::model::user_model::RegisterRequest, 
@@ -16,7 +22,10 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::model::user_model::TokenResponse, 
         crate::model::user_model::RefreshRequest,
         crate::model::profile_model::ProfileResponse,
-        crate::model::profile_model::UpdateProfileRequest
+        crate::model::profile_model::UpdateProfileRequest,
+        crate::model::lost_people_model::LostPeople,
+        crate::model::lost_people_model::CreateLostPeopleRequest,
+        crate::model::lost_people_model::UpdateLostPeopleRequest
     )),
     tags(
         (name = "Lost And Found", description = "gitulah")
