@@ -1,0 +1,4 @@
+
+
+DROP TABLE IF EXISTS place;
+DROP SEQUENCE IF EXISTS place_id_seq;

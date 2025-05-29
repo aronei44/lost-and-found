@@ -1,0 +1,3 @@
+
+DROP TABLE IF EXISTS photo;
+DROP SEQUENCE IF EXISTS photo_id_seq;
