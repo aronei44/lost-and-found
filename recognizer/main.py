@@ -74,7 +74,7 @@ async def add_target(name: str = Form(...), files: List[UploadFile] = File(...))
 
     add_embeddings(name, embeddings)
 
-    return {"message": f"Target '{name}' berhasil ditambahkan dengan {len(embeddings)} foto.", "saved_files": saved_files}
+    return {"message": f"Target '{name}' berhasil ditambahkan dengan {len(embeddings)} foto.", "saved_files": saved_files, "bucket": BUCKET_NAME}
 
 @app.post("/recognize")
 async def recognize(file: UploadFile = File(...)):
@@ -106,6 +106,6 @@ async def recognize(file: UploadFile = File(...)):
             name, _ = search_faiss(index, labels, embedding)
             recognized_names.append(name)
 
-        return {"recognized": recognized_names, "saved_file": object_name}
+        return {"recognized": recognized_names, "saved_file": object_name, "bucket": BUCKET_NAME}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
