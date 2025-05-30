@@ -3,7 +3,7 @@ use axum::{
     Json, 
     http::StatusCode
 };
-use crate::model::photo_data_model::CreatePhotoData;
+use crate::model::photo_data_model::{CreatePhotoData, CollectedField, File_};
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
 use crate::model::place_model::Place;
 use crate::data::photos_data::{create_photo, create_photo_data, get_photos_by_person_id, get_places_by_person_id, get_photos_by_person_id_and_place_id, get_photos_with_lost_by_username};
@@ -15,8 +15,6 @@ use axum::extract::{
 use axum::response::IntoResponse;
 use crate::model::user_model::User;
 use mime;
-use bytes::Bytes;
-use utoipa::ToSchema;
 
 
 
@@ -106,20 +104,6 @@ pub async fn get_photos_with_lost_by_username_handler(
     }
 }
 
-
-#[derive(Debug)]
-struct CollectedField {
-    name: Option<String>,
-    file_name: Option<String>,
-    content_type: Option<mime::Mime>,
-    data: Bytes,
-}
-
-#[derive(ToSchema)]
-struct File_ {
-    #[schema(value_type = String, format = Binary)]
-    files: Vec<u8>
-}
 
 #[utoipa::path(
     post,
