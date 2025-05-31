@@ -33,3 +33,11 @@ pub struct File_ {
     #[schema(value_type = String, format = Binary)]
     pub files: Vec<u8>
 }
+
+#[derive(ToSchema)]
+pub struct FileWithLongLat {
+    pub latitude: String,
+    pub longitude: String,
+    #[schema(value_type = String, format = Binary)]
+    pub files: Vec<u8>
+}

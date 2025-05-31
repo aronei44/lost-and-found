@@ -4,10 +4,10 @@ use axum::{
     http::StatusCode
 };
 use crate::helper::client_request::{recognize_target, save_target_data};
-use crate::model::photo_data_model::{CreatePhotoData, CollectedField, File_};
+use crate::model::photo_data_model::{CollectedField, CreatePhotoData, FileWithLongLat, File_};
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
-use crate::model::place_model::Place;
-use crate::data::photos_data::{create_photo, create_photo_data, get_photos_by_person_id, get_places_by_person_id, get_photos_by_person_id_and_place_id, get_photos_with_lost_by_username};
+use crate::model::place_model::{self, CreatePlace, Place};
+use crate::data::photos_data::{create_photo, create_photo_data, get_photos_by_person_id, get_places_by_person_id, get_photos_by_person_id_and_place_id, get_photos_with_lost_by_username, create_place};
 use axum::extract::{
     Extension,
     Multipart,
@@ -200,7 +200,7 @@ pub async fn upload_photo_handler(
             .unwrap_or_default();
 
         let saved_files_len = &saved_files_array.len();
-        if let Err(e) = save_data(&bucket, &saved_files_array, &vec![person_id]).await {
+        if let Err(e) = save_data(&bucket, &saved_files_array, &vec![person_id], None).await {
             tracing::error!("Failed to save data: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -219,12 +219,28 @@ pub async fn upload_photo_handler(
 async fn save_data(
     bucket: &str,
     saved_files: &Vec<Value>,
-    ids: &Vec<i32>
+    ids: &Vec<i32>,
+    place: Option<&CreatePlace>
 ) -> Result<(), String> {
     tracing::info!("Saving data with bucket: {}, files: {:?}, ids: {:?}", bucket, saved_files, ids);
+    let mut place_id = None;
     
     let pool = create_pool().await.map_err(|e| e.to_string())?;
     let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+
+    if let Some(p) = place {
+        match create_place(&mut tx, p.clone()).await {
+            Ok(created_place) => {
+                place_id = Some(created_place.id);
+            }
+            Err(e) => {
+                tracing::error!("Failed to create place: {}", e);
+                return Err(e.to_string());
+            }
+        }
+    }
+
+
     for person_id in ids {
         for file_path_val in saved_files {
             if let Some(file_path) = file_path_val.as_str() {
@@ -237,7 +253,7 @@ async fn save_data(
                         let photo_data = CreatePhotoData {
                             photo_id: p.id,
                             lost_people_id: *person_id,
-                            place_id: None,
+                            place_id: place_id,
                         };
                         if let Err(e) = create_photo_data(&mut tx, photo_data).await {
                             tracing::error!("Failed to create photo data: {}", e);
@@ -261,7 +277,7 @@ async fn save_data(
     request_body(
         content_type = "multipart/form-data",
         description = "Form field: file (binary)",
-        content = File_
+        content = FileWithLongLat
     ),
     responses(
         (status = 200, description = "Target recognized successfully"),
@@ -276,6 +292,15 @@ pub async fn recognize_target_handler(
     Extension(user): Extension<User>,
     mut multipart: Multipart,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
+    let mut longitude = String::from("0.0"); // Placeholder, replace with actual logic to get longitude
+    let mut latitude = String::from("0.0"); // Placeholder, replace with actual logic to get latitude
+    let mut file: CollectedField = CollectedField {
+        name: None,
+        file_name: None,
+        content_type: None,
+        data: bytes::Bytes::new(),
+    };
+
     while let Ok(Some(field)) = multipart.next_field().await {
         if field.name() == Some("files") {
             let file_name = field.file_name().map(|s| s.to_string());
@@ -292,72 +317,82 @@ pub async fn recognize_target_handler(
                 }
             };
 
-            let file = CollectedField {
+            file = CollectedField {
                 name: Some("file".to_string()),
                 file_name,
                 content_type,
                 data,
             };
-
-            // Call recognize_target with single file
-            match recognize_target(file).await {
-                Ok(recognized_data) => {
-                    tracing::info!("Recognized data: {:?}", recognized_data);
-                    // create json serde from {"bucket": String("lostfound"), "recognized": Array [String("1")], "saved_file": String("found_people/2025-05-31_08-48-24-589488.jpg")}
-                    let bucket = recognized_data
-                        .get("bucket")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("lostfound");
-                    // "recognized" is an array of strings, e.g., [String("1")]
-                    let recognized_ids = recognized_data
-                        .get("recognized")
-                        .and_then(|v| v.as_array())
-                        .cloned()
-                        .unwrap_or_default();
-                    // Convert Vec<Value> of strings to Vec<Value> of numbers for save_data
-                    let recognized_ids: Vec<Value> = recognized_ids
-                        .into_iter()
-                        .filter_map(|v| {
-                            if let Some(s) = v.as_str() {
-                                s.parse::<i32>().ok().map(|n| Value::from(n))
-                            } else {
-                                None
-                            }
-                        })
-                        .collect();
-                    let saved_files = recognized_data
-                        .get("saved_file")
-                        .map(|v| vec![v.clone()])
-                        .unwrap_or_default();
-                    let person_ids: Vec<i32> = recognized_ids
-                        .iter()
-                        .filter_map(|v| v.as_i64())
-                        .map(|v| v as i32)
-                        .collect();
-                    if let Err(e) = save_data(bucket, &saved_files, &person_ids).await {
-                        tracing::error!("Failed to save recognized data: {}", e);
-                        return Err((
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            format!("Failed to save recognized data: {}", e),
-                        ));
-                    }
-                    return Ok((
-                        StatusCode::OK,
-                        format!("Recognized data: {:?}", recognized_data),
-                    ));
-                }
-                Err(e) => {
-                    return Err((
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("Recognition failed: {}", e),
-                    ));
-                }
+        } else if field.name() == Some("longitude") {
+            if let Ok(value) = field.text().await {
+                longitude = value.trim().to_string();
+            }
+        } else if field.name() == Some("latitude") {
+            if let Ok(value) = field.text().await {
+                latitude = value.trim().to_string();
             }
         }
     }
 
-    Err((
-        StatusCode::BAD_REQUEST,
-        "No file provided in multipart data".to_string(),
-    ))
+
+    // Call recognize_target with single file
+    match recognize_target(file).await {
+        Ok(recognized_data) => {
+            tracing::info!("Recognized data: {:?}", recognized_data);
+            // create json serde from {"bucket": String("lostfound"), "recognized": Array [String("1")], "saved_file": String("found_people/2025-05-31_08-48-24-589488.jpg")}
+            let bucket = recognized_data
+                .get("bucket")
+                .and_then(|v| v.as_str())
+                .unwrap_or("lostfound");
+            // "recognized" is an array of strings, e.g., [String("1")]
+            let recognized_ids = recognized_data
+                .get("recognized")
+                .and_then(|v| v.as_array())
+                .cloned()
+                .unwrap_or_default();
+            // Convert Vec<Value> of strings to Vec<Value> of numbers for save_data
+            let recognized_ids: Vec<Value> = recognized_ids
+                .into_iter()
+                .filter_map(|v| {
+                    if let Some(s) = v.as_str() {
+                        s.parse::<i32>().ok().map(|n| Value::from(n))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            let saved_files = recognized_data
+                .get("saved_file")
+                .map(|v| vec![v.clone()])
+                .unwrap_or_default();
+            let person_ids: Vec<i32> = recognized_ids
+                .iter()
+                .filter_map(|v| v.as_i64())
+                .map(|v| v as i32)
+                .collect();
+            let place = CreatePlace {
+                user_username: user.username.clone(),
+                latitude: latitude.clone(),
+                longitude: longitude.clone(),
+            };
+            if let Err(e) = save_data(bucket, &saved_files, &person_ids, Some(&place)).await {
+                tracing::error!("Failed to save recognized data: {}", e);
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to save recognized data: {}", e),
+                ));
+            }
+            return Ok((
+                StatusCode::OK,
+                format!("Recognized data: {:?}", recognized_data),
+            ));
+        }
+        Err(e) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Recognition failed: {}", e),
+            ));
+        }
+    }
+
 }

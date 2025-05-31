@@ -11,7 +11,7 @@ pub struct Place {
 }
 
 
-#[derive(Serialize, Deserialize, ToSchema, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct CreatePlace {
     pub user_username: String,
     pub latitude: String,

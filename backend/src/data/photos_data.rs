@@ -1,7 +1,7 @@
 use crate::helper::db::create_pool;
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
 use crate::model::photo_data_model::{CreatePhotoData, PhotoData};
-use crate::model::place_model::Place;
+use crate::model::place_model::{CreatePlace, Place};
 use sqlx::Acquire; // This import is required for .fetch_one(&mut tx)
 
 pub async fn get_photos_by_person_id(person_id: i32) -> sqlx::Result<Vec<Photo>> {
@@ -124,4 +124,26 @@ pub async fn create_photo_data<'a>(tx: &mut sqlx::Transaction<'a, sqlx::Postgres
     .fetch_one(&mut *conn)
     .await?;
     Ok(new_photo_data)
+}
+
+pub async fn create_place<'a>(
+    tx: &mut sqlx::Transaction<'a, sqlx::Postgres>,
+    place: CreatePlace,
+) -> Result<Place, sqlx::Error> {
+    let conn = tx.acquire().await?;
+    let rec = sqlx::query_as!(
+        Place,
+        r#"
+        INSERT INTO places (user_username, latitude, longitude)
+        VALUES ($1, $2, $3)
+        RETURNING id, user_username, latitude, longitude, created_at
+        "#,
+        place.user_username,
+        place.latitude,
+        place.longitude
+    )
+    .fetch_one(&mut *conn)
+    .await?;
+
+    Ok(rec)
 }
