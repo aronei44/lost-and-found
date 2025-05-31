@@ -6,7 +6,7 @@ use axum::{
 use crate::helper::client_request::{recognize_target, save_target_data};
 use crate::model::photo_data_model::{CollectedField, CreatePhotoData, FileWithLongLat, File_};
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
-use crate::model::place_model::{self, CreatePlace, Place};
+use crate::model::place_model::{CreatePlace, Place};
 use crate::data::photos_data::{create_photo, create_photo_data, get_photos_by_person_id, get_places_by_person_id, get_photos_by_person_id_and_place_id, get_photos_with_lost_by_username, create_place};
 use axum::extract::{
     Extension,

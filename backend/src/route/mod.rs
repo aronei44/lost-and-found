@@ -35,7 +35,6 @@ pub fn routes() -> Router {
         .route(
             "/refresh",
             post(refresh_token)
-                .layer(middleware::from_fn(authorization_middleware))
         )
     )
     .nest("/profile", Router::new()
