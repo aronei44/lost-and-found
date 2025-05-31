@@ -1,8 +1,10 @@
 
+use axum::Error;
 use axum::{
     Json, 
     http::StatusCode
 };
+use crate::helper::client_request::save_target_data;
 use crate::model::photo_data_model::{CreatePhotoData, CollectedField, File_};
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
 use crate::model::place_model::Place;
@@ -162,33 +164,67 @@ pub async fn upload_photo_handler(
             format!("files are required"),
         );
     }
-
-    // Example response data, can be sent as JSON if needed
-    let response = serde_json::json!({
-        "bucket": "lostfound",
-        "saved_files": ["/apagitu.jpg", "/apagitup.jpg"]
-    });
-
-    // Simulate saving the photo and photo data
-    for res in response["saved_files"].as_array().unwrap_or(&vec![]) {
-        let file_path = res.as_str().unwrap_or("");
-        let photo = CreatePhoto {
-            bucket: response["bucket"].as_str().unwrap_or("").to_string(),
-            path: file_path.to_string(),
+    let person_id_str = person_id.to_string();
+    let files_len = files.len();
+    tracing::info!("Received {} files for person_id: {}", files_len, person_id_str);
+    let res = save_target_data(&person_id_str, files).await;
+    if let Err(e) = res {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to save target data: {}", e),
+        );
+    } else {
+        let Ok(res) = res else {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to save target data".to_string(),
+            );
         };
-        if let Ok(p) = create_photo(photo).await {
-            let _photo_data = CreatePhotoData {
-                photo_id: p.id,
-                lost_people_id: person_id,
-                place_id: None, // Assuming no place ID for this example
-            };
-            let _ = create_photo_data(_photo_data).await;
-        }
-    }
+        tracing::info!("res from save_target_data: {:?}", res);
+        // Build a JSON response with details about the upload
+        let response = serde_json::json!({
+            "bucket": res
+                .get("bucket")
+                .and_then(|v| v.as_str())
+                .unwrap_or(""),
+            "saved_files": res
+                .get("saved_files")
+                .cloned()
+                .unwrap_or_else(|| serde_json::json!([]))
+        });
+        tracing::info!("Upload response: {:?}", response);
+        let bucket = response["bucket"].as_str().unwrap_or("").to_string();
+        let saved_files_array = response["saved_files"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
 
-    // Bisa diteruskan ke service lain nanti
-    (
-        StatusCode::OK,
-        format!("Photo uploaded successfully: {} file(s)", files.len()),
-    )
+        let saved_files_len = &saved_files_array.len();
+    
+        for file_path_value in saved_files_array {
+            if let Some(file_path) = file_path_value.as_str() {
+                let photo = CreatePhoto {
+                    bucket: bucket.clone(),
+                    path: file_path.to_string(),
+                };
+
+                // Pastikan semua data sudah dimiliki, baru await
+                let photo_result = create_photo(photo).await;
+                if let Ok(p) = photo_result {
+                    let _photo_data = CreatePhotoData {
+                        photo_id: p.id,
+                        lost_people_id: person_id,
+                        place_id: None,
+                    };
+                    let _ = create_photo_data(_photo_data).await;
+                }
+            }
+        }
+    
+        (
+            StatusCode::OK,
+            format!("Photo uploaded successfully: {} file(s)", saved_files_len)
+        )
+
+    }
 }

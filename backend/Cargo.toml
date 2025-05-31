@@ -19,8 +19,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower-http = { version = "0.6.4", features = ["trace"] }
 clap = { version = "4", features = ["derive"] }
-sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "macros", "uuid", "chrono"] }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "macros", "uuid", "chrono", "runtime-tokio-rustls"] }
 chrono = { version = "0.4.41", features = ["serde"] }
 bcrypt = "0.17.0"
 mime = "0.3.17"
 bytes = "1.10.1"
+reqwest = { version = "0.12.18", features = ["json", "multipart"] }

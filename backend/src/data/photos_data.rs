@@ -86,7 +86,7 @@ pub async fn get_photos_with_lost_by_username(username: &str) -> sqlx::Result<Ve
     Ok(photos)
 }
 
-pub async fn create_photo(photo: CreatePhoto) -> sqlx::Result<Photo> {
+pub async fn create_photo(photo: CreatePhoto) -> Result<Photo, Box<dyn std::error::Error + Send + Sync>> {
     let pool = create_pool().await?;
     let new_photo = sqlx::query_as!(
         Photo,
@@ -103,7 +103,7 @@ pub async fn create_photo(photo: CreatePhoto) -> sqlx::Result<Photo> {
     Ok(new_photo)
 }
 
-pub async fn create_photo_data(photo_data: CreatePhotoData) -> sqlx::Result<PhotoData> {
+pub async fn create_photo_data(photo_data: CreatePhotoData) -> Result<PhotoData, Box<dyn std::error::Error + Send + Sync>> {
     let pool = create_pool().await?;
     let new_photo_data = sqlx::query_as!(
         PhotoData,
