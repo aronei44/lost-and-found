@@ -4,6 +4,7 @@ import Input from "./Input";
 import { useState } from "react";
 import { apiClient } from "@/hooks/useApi";
 import { useGlobalContext } from "@/hooks/globalprovider";
+import Swal from "sweetalert2";
 
 const Login = () => {
 
@@ -37,6 +38,11 @@ const Login = () => {
                 refreshToken: response.refresh_token
             });
             setActiveState("main");
+            Swal.fire({
+                title: "Login Successful",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
         } catch (error) {
             setAuthenticated(false);
             setToken({
@@ -44,6 +50,12 @@ const Login = () => {
                 refreshToken: ''
             });
             console.error("Login failed:", error);
+            Swal.fire({
+                title: "Login Failed",
+                text: "Please check your username and password.",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
         } finally {
             setForm({
                 username: '',

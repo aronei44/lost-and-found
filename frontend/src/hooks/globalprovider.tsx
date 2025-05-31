@@ -3,6 +3,7 @@ import React, { createContext, useEffect, useMemo, useState } from 'react';
 import Main from '@/components/Main';
 import Login from '@/components/Login';
 import { apiClient } from './useApi';
+import Swal from 'sweetalert2';
 
 type GlobalState = {
     state: {
@@ -91,6 +92,12 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         });
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        Swal.fire({
+            title: "Logout",
+            text: "Sesi anda berakhir.",
+            icon: "success",
+            confirmButtonText: "OK"
+        });
     }
 
     const revalidateToken = async (tkn: string) => {
