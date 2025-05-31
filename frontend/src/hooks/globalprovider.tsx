@@ -4,6 +4,7 @@ import Main from '@/components/Main';
 import Login from '@/components/Login';
 import { apiClient } from './useApi';
 import Swal from 'sweetalert2';
+import Register from '@/components/Register';
 
 type GlobalState = {
     state: {
@@ -74,6 +75,7 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         const components : Record<string, React.ReactElement> = {
             main: <Main />,
             login: <Login />,
+            register: <Register />
         }
         setActiveComponent(components[state] || <></>);
     }
@@ -94,7 +96,7 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         localStorage.removeItem("refreshToken");
         Swal.fire({
             title: "Logout",
-            text: "Sesi anda berakhir.",
+            text: "Sesion has been terminated.",
             icon: "success",
             confirmButtonText: "OK"
         });
