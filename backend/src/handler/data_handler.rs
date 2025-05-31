@@ -17,6 +17,7 @@ use axum::response::IntoResponse;
 use crate::model::user_model::User;
 use mime;
 use serde_json::Value;
+use crate::helper::db::create_pool;
 
 
 #[utoipa::path(
@@ -221,6 +222,9 @@ async fn save_data(
     ids: &Vec<i32>
 ) -> Result<(), String> {
     tracing::info!("Saving data with bucket: {}, files: {:?}, ids: {:?}", bucket, saved_files, ids);
+    
+    let pool = create_pool().await.map_err(|e| e.to_string())?;
+    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
     for person_id in ids {
         for file_path_val in saved_files {
             if let Some(file_path) = file_path_val.as_str() {
@@ -228,14 +232,14 @@ async fn save_data(
                     bucket: bucket.to_string(),
                     path: file_path.to_string(),
                 };
-                match create_photo(photo).await {
+                match create_photo(&mut tx, photo).await {
                     Ok(p) => {
                         let photo_data = CreatePhotoData {
                             photo_id: p.id,
                             lost_people_id: *person_id,
                             place_id: None,
                         };
-                        if let Err(e) = create_photo_data(photo_data).await {
+                        if let Err(e) = create_photo_data(&mut tx, photo_data).await {
                             tracing::error!("Failed to create photo data: {}", e);
                         }
                     }
@@ -246,6 +250,7 @@ async fn save_data(
             }
         }
     }
+    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(())
 }
 

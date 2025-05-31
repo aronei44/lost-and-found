@@ -2,6 +2,7 @@ use crate::helper::db::create_pool;
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
 use crate::model::photo_data_model::{CreatePhotoData, PhotoData};
 use crate::model::place_model::Place;
+use sqlx::Acquire; // This import is required for .fetch_one(&mut tx)
 
 pub async fn get_photos_by_person_id(person_id: i32) -> sqlx::Result<Vec<Photo>> {
     let pool = create_pool().await?;
@@ -86,25 +87,29 @@ pub async fn get_photos_with_lost_by_username(username: &str) -> sqlx::Result<Ve
     Ok(photos)
 }
 
-pub async fn create_photo(photo: CreatePhoto) -> Result<Photo, Box<dyn std::error::Error + Send + Sync>> {
-    let pool = create_pool().await?;
-    let new_photo = sqlx::query_as!(
+pub async fn create_photo<'a>(
+    tx: &mut sqlx::Transaction<'a, sqlx::Postgres>,
+    photo: CreatePhoto,
+) -> Result<Photo, sqlx::Error> {
+    let conn = tx.acquire().await?;
+    let rec = sqlx::query_as!(
         Photo,
         r#"
-        insert into photos (bucket, path)
-        values ($1, $2)
-        returning id, bucket, path
+        INSERT INTO photos (bucket, path)
+        VALUES ($1, $2)
+        RETURNING id, bucket, path
         "#,
         photo.bucket,
         photo.path
     )
-    .fetch_one(&pool)
+    .fetch_one(&mut *conn)
     .await?;
-    Ok(new_photo)
+
+    Ok(rec)
 }
 
-pub async fn create_photo_data(photo_data: CreatePhotoData) -> Result<PhotoData, Box<dyn std::error::Error + Send + Sync>> {
-    let pool = create_pool().await?;
+pub async fn create_photo_data<'a>(tx: &mut sqlx::Transaction<'a, sqlx::Postgres> ,photo_data: CreatePhotoData) -> Result<PhotoData, Box<dyn std::error::Error + Send + Sync>> {
+    let conn = tx.acquire().await?;
     let new_photo_data = sqlx::query_as!(
         PhotoData,
         r#"
@@ -116,7 +121,7 @@ pub async fn create_photo_data(photo_data: CreatePhotoData) -> Result<PhotoData,
         photo_data.lost_people_id,
         photo_data.place_id
     )
-    .fetch_one(&pool)
+    .fetch_one(&mut *conn)
     .await?;
     Ok(new_photo_data)
 }
