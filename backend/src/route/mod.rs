@@ -19,7 +19,8 @@ use crate::{
             get_places_by_person_id_handler,
             get_photos_by_person_id_and_place_id_handler,
             get_photos_with_lost_by_username_handler,
-            upload_photo_handler
+            upload_photo_handler,
+            recognize_target_handler
         }
     },
     helper::auth::authorization_middleware
@@ -59,6 +60,7 @@ pub fn routes() -> Router {
             .route("/photos/{person_id}/{place_id}", get(get_photos_by_person_id_and_place_id_handler))
             .route("/monitoring", get(get_photos_with_lost_by_username_handler))
             .route("/upload_photo/{person_id}", post(upload_photo_handler))
+            .route("/recognize_target", post(recognize_target_handler))
             .layer(middleware::from_fn(authorization_middleware))
     )
 }

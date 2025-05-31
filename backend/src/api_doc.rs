@@ -19,7 +19,8 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::handler::data_handler::get_places_by_person_id_handler,
         crate::handler::data_handler::get_photos_by_person_id_and_place_id_handler,
         crate::handler::data_handler::get_photos_with_lost_by_username_handler,
-        crate::handler::data_handler::upload_photo_handler
+        crate::handler::data_handler::upload_photo_handler,
+        crate::handler::data_handler::recognize_target_handler
     ),
     components(schemas(
         crate::model::user_model::RegisterRequest, 
