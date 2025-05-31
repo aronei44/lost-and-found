@@ -5,6 +5,7 @@ import Login from '@/components/Login';
 import { apiClient } from './useApi';
 import Swal from 'sweetalert2';
 import Register from '@/components/Register';
+import Profile from '@/components/Profile';
 
 type GlobalState = {
     state: {
@@ -75,7 +76,8 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         const components : Record<string, React.ReactElement> = {
             main: <Main />,
             login: <Login />,
-            register: <Register />
+            register: <Register />,
+            profile: <Profile />
         }
         setActiveComponent(components[state] || <></>);
     }
