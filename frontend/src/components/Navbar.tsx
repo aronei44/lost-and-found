@@ -17,29 +17,37 @@ const Navbar = () => {
             <div className="container mx-auto flex justify-between items-center">
                 <NavButton
                     onClick={() => setActiveState("main")}
-                    label="Lost And Found"
+                    label="Cari Dan Kenali"
                 />
                 <div>
                     {!authenticated ? (
                         <>
                         <NavButton
                             onClick={() => setActiveState("login")}
-                            label="Login"
+                            label="Masuk"
                         />
                         <NavButton
                             onClick={() => setActiveState("register")}
-                            label="Register"
+                            label="Daftar"
                         />
                         </>
                     ): (
                         <>
                             <NavButton
+                                onClick={() => setActiveState("lost_people")}
+                                label="Daftar Dicari"
+                            />
+                            <NavButton
+                                onClick={() => setActiveState("lost_people_monitored")}
+                                label="Daftar Dicari (Monitor)"
+                            />
+                            <NavButton
                                 onClick={() => setActiveState("profile")}
-                                label="Profile"
+                                label="Profil"
                             />
                             <NavButton
                                 onClick={() => setLogout()}
-                                label="Logout"
+                                label="Keluar"
                             />
                         </>
                     )}

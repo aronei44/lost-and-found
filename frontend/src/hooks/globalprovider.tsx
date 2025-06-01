@@ -6,6 +6,8 @@ import { apiClient } from './useApi';
 import Swal from 'sweetalert2';
 import Register from '@/components/Register';
 import Profile from '@/components/Profile';
+import LostPeopleAll from '@/components/LostPeopleAll';
+import LostPeopleMonitored from '@/components/LostPeopleMonitored';
 
 type GlobalState = {
     state: {
@@ -77,7 +79,9 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
             main: <Main />,
             login: <Login />,
             register: <Register />,
-            profile: <Profile />
+            profile: <Profile />,
+            lost_people: <LostPeopleAll />,
+            lost_people_monitored: <LostPeopleMonitored />
         }
         setActiveComponent(components[state] || <></>);
     }

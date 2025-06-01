@@ -1,0 +1,129 @@
+"use client";
+import Card from "./Card";
+import { useEffect, useState } from "react";
+import { apiClient } from "@/hooks/useApi";
+import { useGlobalContext } from "@/hooks/globalprovider";
+
+const LostPeople = (p: {
+    all: boolean
+}) => {
+
+    const {
+        state: {
+            token
+        }
+    } = useGlobalContext();
+
+    const [data, setData] = useState<Array<{
+        fullname: string,
+        alias: string,
+        born_date: string,
+        lost_date: string,
+        last_condition: string,
+        gender: string,
+        id: number,
+        is_found: boolean,
+        found_date?: string
+    }>>([]);
+
+    const getLostPeople = async () => {
+        try {
+            const response = await apiClient({
+                method: "get",
+                url: `/api/lost_people${p.all ? '/all' : ''}`,
+                headers: {
+                    Authorization: `Bearer ${token.accessToken}`
+                }
+            });
+            setData(response);
+        } catch (error) {
+            console.error("Failed to fetch lost people:", error);
+        }
+    }
+    useEffect(() => {
+        getLostPeople();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return (
+        <div className="container mx-auto p-4 mt-20">
+            <Card>
+                <h1 className="text-6xl font-bold mt-10">Data Orang Dicari</h1>
+                <hr className="mb-6"/>
+
+                <div className="relative overflow-x-auto">
+                    <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" className="px-6 py-3">
+                                    Nama Lengkap
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Alias
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Jenis Kelamin
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Tanggal Lahir
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Tanggal Hilang
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Kondisi Terakhir
+                                </th>
+                                { !p.all && (
+                                    <>
+                                        <th scope="col" className="px-6 py-3">
+                                            Status
+                                        </th>
+                                        <th scope="col" className="px-6 py-3">
+                                            Tanggal Ditemukan
+                                        </th>
+                                    </>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((person) => (
+                                <tr key={person.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
+                                    <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        {person.fullname}
+                                    </th>
+                                    <td className="px-6 py-4">
+                                        {person.alias}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {person.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {new Date(person.born_date).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {new Date(person.lost_date).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {person.last_condition}
+                                    </td>
+                                    { !p.all && (
+                                        <>
+                                            <td className="px-6 py-4">
+                                                {person.is_found ? 'Ditemukan' : 'Belum Ditemukan'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {person.found_date ? new Date(person.found_date).toLocaleDateString() : '-'}
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
+        </div>
+    )
+}
+
+export default LostPeople;
