@@ -3,8 +3,9 @@ use axum::{
     http::StatusCode
 };
 use crate::model::lost_people_model::{UpdateLostPeopleRequest, CreateLostPeopleRequest, LostPeople};
-use crate::data::lost_people_data::{add_monitoring, get_monitored_people, get_person_by_id, create_person};
-use axum::extract::Extension;
+use crate::data::lost_people_data::{add_monitoring, get_monitored_people, get_person_by_id, create_person, get_founder_by_username};
+use crate::model::profile_model::Profile;
+use axum::extract::{Extension, Path};
 use crate::model::user_model::User;
 
 
@@ -171,6 +172,33 @@ pub async fn add_monitoring_handler(
 pub async fn get_all_lost_people_handler() -> Result<Json<Vec<LostPeople>>, (StatusCode, Json<serde_json::Value>)> {
     match crate::data::lost_people_data::all_lost_people().await {
         Ok(people) => Ok(Json(people)),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error": e.to_string()})),
+        )),
+    }
+}
+
+
+#[utoipa::path(
+    get,
+    path = "/api/data/founder/{current_user}",
+    params(
+        ("current_user" = String, Path, description = "Username of the founder")
+    ),
+    responses(
+        (status = 200, description = "Founder Profile Retrieved", body = Profile),
+        (status = 500, description = "Internal Server Error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    )
+)]
+pub async fn get_founder_by_username_handler(
+    Path(current_user): Path<String>,
+) -> Result<Json<Profile>, (StatusCode, Json<serde_json::Value>)> {
+    match get_founder_by_username(&current_user).await {
+        Ok(profile) => Ok(Json(profile)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"error": e.to_string()})),

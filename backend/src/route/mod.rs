@@ -12,7 +12,8 @@ use crate::{
             create_person_handler,
             update_person_handler,
             add_monitoring_handler,
-            get_all_lost_people_handler
+            get_all_lost_people_handler,
+            get_founder_by_username_handler
         },
         data_handler::{
             get_photos_by_person_id_handler,
@@ -60,6 +61,7 @@ pub fn routes() -> Router {
             .route("/monitoring", get(get_photos_with_lost_by_username_handler))
             .route("/upload_photo/{person_id}", post(upload_photo_handler))
             .route("/recognize_target", post(recognize_target_handler))
+            .route("/founder/{current_user}", get(get_founder_by_username_handler))
             .layer(middleware::from_fn(authorization_middleware))
     )
 }

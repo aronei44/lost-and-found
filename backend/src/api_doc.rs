@@ -15,6 +15,7 @@ use utoipa::openapi::security::{SecurityScheme, HttpAuthScheme, HttpBuilder};
         crate::handler::lost_people_handler::update_person_handler,
         crate::handler::lost_people_handler::add_monitoring_handler,
         crate::handler::lost_people_handler::get_all_lost_people_handler,
+        crate::handler::lost_people_handler::get_founder_by_username_handler,
         crate::handler::data_handler::get_photos_by_person_id_handler,
         crate::handler::data_handler::get_places_by_person_id_handler,
         crate::handler::data_handler::get_photos_by_person_id_and_place_id_handler,

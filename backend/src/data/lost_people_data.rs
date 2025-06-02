@@ -1,5 +1,7 @@
 use crate::helper::db::create_pool;
 use crate::model::lost_people_model::{LostPeople, UpdateLostPeopleRequest, CreateLostPeopleRequest};
+use crate::model::profile_model::Profile;
+use crate::model::user_model::User;
 
 pub async fn get_monitored_people(username: &str) -> sqlx::Result<Vec<LostPeople>> {
     let pool = create_pool().await?;
@@ -142,6 +144,23 @@ pub async fn all_lost_people() -> sqlx::Result<Vec<LostPeople>> {
         "#,
     )
     .fetch_all(&pool)
+    .await?;
+    Ok(people)
+}
+
+pub async fn get_founder_by_username(username: &str) -> sqlx::Result<Profile> {
+    let pool = create_pool().await?;
+    let people = sqlx::query_as!(
+        Profile,
+        r#"
+        select 
+            p.username, p.full_name, p.email, p.phone, p.address
+        from profiles p
+        where p.username = $1
+        "#,
+        username
+    )
+    .fetch_one(&pool)
     .await?;
     Ok(people)
 }
