@@ -6,9 +6,10 @@ const Input = (p: {
     label?: string;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     value?: string;
+    disabled?: boolean;
 }) => {
     return (
-        <div className="mb-6">
+        <div className="mb-2">
             <label 
                 htmlFor={p.id} 
                 className="block text-gray-700">
@@ -24,6 +25,7 @@ const Input = (p: {
                 onChange={p.onChange} 
                 value={p.value} 
                 autoComplete="off"
+                disabled={p.disabled}
             />
         </div>
     )

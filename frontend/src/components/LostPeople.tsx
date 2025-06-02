@@ -3,6 +3,9 @@ import Card from "./Card";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/hooks/useApi";
 import { useGlobalContext } from "@/hooks/globalprovider";
+import ModalComponent from "./Modal";
+import Detail from "./Detail";
+import Photo from "./Photo";
 
 const LostPeople = (p: {
     all: boolean
@@ -25,6 +28,8 @@ const LostPeople = (p: {
         is_found: boolean,
         found_date?: string
     }>>([]);
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [id, setId] = useState<number>(0);
 
     const getLostPeople = async () => {
         try {
@@ -83,6 +88,9 @@ const LostPeople = (p: {
                                         </th>
                                     </>
                                 )}
+                                <th scope="col" className="px-6 py-3">
+                                    Aksi
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,12 +124,39 @@ const LostPeople = (p: {
                                             </td>
                                         </>
                                     )}
+
+                                    <td className="px-6 py-4">
+                                        <button
+                                            className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
+                                            onClick={() => {
+                                                setId(person.id);
+                                                setShowModal(true);
+                                            }}
+                                        >
+                                            Lihat Detail
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             </Card>
+            <ModalComponent
+                show={showModal}
+                onClose={() => {
+                    setShowModal(false);
+                }}
+                title="Detail Orang Hilang"
+            >
+                <div className="grid grid-cols-3 gap-4">
+                    <Detail
+                        id={id}
+                        disabled={true}
+                    />
+                    <Photo id={id} />
+                </div>
+            </ModalComponent>
         </div>
     )
 }
