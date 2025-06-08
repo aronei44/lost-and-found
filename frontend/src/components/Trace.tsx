@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import { useGlobalContext } from "@/hooks/globalprovider";
 import Photo from "./Photo";
 import ModalComponent from "./Modal";
+import Profile from "./Profile";
 
 const Trace = (p: {
     id: number,
@@ -25,6 +26,7 @@ const Trace = (p: {
     }>>([]);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [placeId, setPlaceId] = useState<number>(0);
+    const [user, setUser] = useState<string>("");
 
     const getDataTrace = async () => {
         try {
@@ -105,6 +107,7 @@ const Trace = (p: {
                                         className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
                                         onClick={() => {
                                             setPlaceId(trace.id);
+                                            setUser(trace.user_username);
                                             setShowModal(true);
                                         }}
                                     >
@@ -123,8 +126,9 @@ const Trace = (p: {
                 }}
                 title="Detail Orang Hilang"
             >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                     <Photo id={p.id} place_id={placeId} />
+                    <Profile username={user} />
                 </div>
             </ModalComponent>
         </Card>
