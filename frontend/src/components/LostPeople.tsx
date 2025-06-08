@@ -6,6 +6,7 @@ import { useGlobalContext } from "@/hooks/globalprovider";
 import ModalComponent from "./Modal";
 import Detail from "./Detail";
 import Photo from "./Photo";
+import AddPhoto from "./AddPhoto";
 
 const LostPeople = (p: {
     all: boolean
@@ -29,6 +30,7 @@ const LostPeople = (p: {
         found_date?: string
     }>>([]);
     const [showModal, setShowModal] = useState<boolean>(false);
+    const [showPhotoModal, setShowPhotoModal] = useState<boolean>(false);
     const [id, setId] = useState<number>(0);
 
     const getLostPeople = async () => {
@@ -139,7 +141,7 @@ const LostPeople = (p: {
                                         </>
                                     )}
 
-                                    <td className="px-6 py-4">
+                                    <td className="py-2">
                                         <button
                                             className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
                                             onClick={() => {
@@ -149,7 +151,7 @@ const LostPeople = (p: {
                                         >
                                             Lihat Detail
                                         </button>
-                                        { p.all && (
+                                        { p.all ? (
                                             <button
                                                 className="bg-green-500 text-white px-4 py-2 rounded cursor-pointer ml-4"
                                                 onClick={() => {
@@ -157,6 +159,16 @@ const LostPeople = (p: {
                                                 }}
                                             >
                                                + Monitor
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="bg-green-500 text-white px-4 py-2 rounded cursor-pointer ml-4 mt-4"
+                                                onClick={() => {
+                                                    setId(person.id);
+                                                    setShowPhotoModal(true);
+                                                }}
+                                            >
+                                                + Foto
                                             </button>
                                         )}
                                     </td>
@@ -179,6 +191,18 @@ const LostPeople = (p: {
                         disabled={true}
                     />
                     <Photo id={id} />
+                </div>
+            </ModalComponent>
+            <ModalComponent
+                show={showPhotoModal}
+                onClose={() => {
+                    setShowPhotoModal(false);
+                }}
+                title="Foto Orang Hilang"
+            >
+                <div className="grid grid-cols-4 gap-4">
+                    <Photo id={id} />
+                    <AddPhoto id={id} setShowPhotoModal={setShowPhotoModal} />
                 </div>
             </ModalComponent>
         </div>

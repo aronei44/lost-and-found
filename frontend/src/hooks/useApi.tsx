@@ -5,7 +5,7 @@ import { serverKey } from './useServerKey';
 export const apiClient = async (p: {
     method: "get" | "post" | "put" | "delete";
     url: string;
-    data?: Record<string, unknown>;
+    data?: Record<string, unknown> | FormData;
     params?: Record<string, unknown>;
     headers?: Record<string, string>;
     baseUrl?: string;

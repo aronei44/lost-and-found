@@ -26,6 +26,8 @@ const Input = (p: {
                 value={p.value} 
                 autoComplete="off"
                 disabled={p.disabled}
+                accept={p.type === 'file' ? 'image/*' : undefined}
+                multiple={p.type === 'file' ? true : undefined}
             />
         </div>
     )
