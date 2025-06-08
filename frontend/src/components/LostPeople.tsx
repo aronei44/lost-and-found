@@ -45,6 +45,20 @@ const LostPeople = (p: {
             console.error("Failed to fetch lost people:", error);
         }
     }
+
+    const addMonitoredLostPeople = async (id: string) => {
+        try {
+            await apiClient({
+                method: "post",
+                url: `/api/lost_people/${id}`,
+                headers: {
+                    Authorization: `Bearer ${token.accessToken}`
+                }
+            });
+        } catch (error) {
+            console.error("Failed to add monitored lost people:", error);
+        }
+    }
     useEffect(() => {
         getLostPeople();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,6 +149,16 @@ const LostPeople = (p: {
                                         >
                                             Lihat Detail
                                         </button>
+                                        { p.all && (
+                                            <button
+                                                className="bg-green-500 text-white px-4 py-2 rounded cursor-pointer ml-4"
+                                                onClick={() => {
+                                                    addMonitoredLostPeople(person.id.toString());
+                                                }}
+                                            >
+                                               + Monitor
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
