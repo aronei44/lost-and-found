@@ -7,6 +7,7 @@ import ModalComponent from "./Modal";
 import Detail from "./Detail";
 import Photo from "./Photo";
 import AddPhoto from "./AddPhoto";
+import AddLostPerson from "./AddLostPerson";
 
 const LostPeople = (p: {
     all: boolean
@@ -31,6 +32,7 @@ const LostPeople = (p: {
     }>>([]);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [showPhotoModal, setShowPhotoModal] = useState<boolean>(false);
+    const [showAddModal, setShowAddModal] = useState<boolean>(false);
     const [id, setId] = useState<number>(0);
 
     const getLostPeople = async () => {
@@ -64,10 +66,29 @@ const LostPeople = (p: {
     useEffect(() => {
         getLostPeople();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [showAddModal]);
 
     return (
         <div className="container mx-auto p-4 mt-20">
+            <div className="flex justify-between items-center mb-4">
+                { !p.all && (
+                    <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
+                        onClick={() => setShowAddModal(true)}
+                    >
+                        Tambah Orang Hilang
+                    </button>
+                )}
+                { showAddModal && (
+                    <ModalComponent
+                        show={showAddModal}
+                        onClose={() => setShowAddModal(false)}
+                        title="Tambah Orang Hilang"
+                    >
+                        <AddLostPerson setShowAddModal={setShowAddModal} />
+                    </ModalComponent>
+                )}
+            </div>
             <Card>
                 <h1 className="text-6xl font-bold mt-10">Data Orang Dicari</h1>
                 <hr className="mb-6"/>
