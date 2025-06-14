@@ -8,6 +8,8 @@ import Register from '@/components/Register';
 import Profile from '@/components/Profile';
 import LostPeopleAll from '@/components/LostPeopleAll';
 import LostPeopleMonitored from '@/components/LostPeopleMonitored';
+import PhotoButton from '@/components/PhotoButton';
+import Camera from '@/components/Camera';
 
 type GlobalState = {
     state: {
@@ -73,6 +75,7 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         accessToken: '',
         refreshToken: ''
     })
+    const [cameraModal, setCameraModal] = useState<boolean>(false);
 
     const getComponent = (state: string) => {
         const components : Record<string, React.ReactElement> = {
@@ -179,6 +182,17 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
             value={context}
         >
             {p.children}
+            {authenticated && (
+                <PhotoButton
+                    onClick={() => setCameraModal(true)}
+                >
+                    <div className='text-2xl'>+</div>
+                </PhotoButton>
+            )}
+            <Camera
+                show={cameraModal}
+                setShow={setCameraModal}
+            />
         </GlobalContext.Provider>
     );
 }

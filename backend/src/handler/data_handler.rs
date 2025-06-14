@@ -4,10 +4,12 @@ use axum::{
     http::StatusCode
 };
 use crate::helper::client_request::{recognize_target, save_target_data};
+use crate::model::lost_people_model::LostPeople;
 use crate::model::photo_data_model::{CollectedField, CreatePhotoData, FileWithLongLat, File_};
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
 use crate::model::place_model::{CreatePlace, Place};
 use crate::data::photos_data::{create_photo, create_photo_data, get_photos_by_person_id, get_places_by_person_id, get_photos_by_person_id_and_place_id, get_photos_with_lost_by_username, create_place};
+use crate::data::lost_people_data::{get_lost_people_data_with_ids};
 use axum::extract::{
     Extension,
     Multipart,
@@ -18,6 +20,7 @@ use crate::model::user_model::User;
 use mime;
 use serde_json::Value;
 use crate::helper::db::create_pool;
+use serde::{Serialize, Deserialize};
 
 
 #[utoipa::path(
@@ -271,6 +274,14 @@ async fn save_data(
 }
 
 
+#[derive(Serialize, Deserialize)]
+pub struct RecoginizedResponse {
+    pub bucket: String,
+    pub recognized: Vec<LostPeople>,
+    pub saved_file: String,
+}
+
+
 #[utoipa::path(
     post,
     path = "/api/data/recognize_target",
@@ -291,7 +302,7 @@ async fn save_data(
 pub async fn recognize_target_handler(
     Extension(user): Extension<User>,
     mut multipart: Multipart,
-) -> Result<(StatusCode, String), (StatusCode, String)> {
+) -> Result<Json<RecoginizedResponse>, (StatusCode, String)> {
     let mut longitude = String::from("0.0"); // Placeholder, replace with actual logic to get longitude
     let mut latitude = String::from("0.0"); // Placeholder, replace with actual logic to get latitude
     let mut file: CollectedField = CollectedField {
@@ -382,10 +393,27 @@ pub async fn recognize_target_handler(
                     format!("Failed to save recognized data: {}", e),
                 ));
             }
-            return Ok((
-                StatusCode::OK,
-                format!("Recognized data: {:?}", recognized_data),
-            ));
+            let saved_file_str = saved_files
+                .get(0)
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let recognized_persons = match get_lost_people_data_with_ids(person_ids.clone()).await {
+                Ok(persons) => persons,
+                Err(e) => {
+                    tracing::error!("Failed to get lost people data: {}", e);
+                    return Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        format!("Failed to get lost people data: {}", e),
+                    ));
+                }
+            };
+            let returnobject = RecoginizedResponse {
+                bucket: bucket.to_string(),
+                recognized: recognized_persons,
+                saved_file: saved_file_str,
+            };
+            return Ok(Json(returnobject));
         }
         Err(e) => {
             return Err((

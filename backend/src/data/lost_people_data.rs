@@ -164,3 +164,26 @@ pub async fn get_founder_by_username(username: &str) -> sqlx::Result<Profile> {
     .await?;
     Ok(people)
 }
+
+pub async fn get_lost_people_data_with_ids(
+    person_ids: Vec<i32>,
+) -> sqlx::Result<Vec<LostPeople>> {
+    if person_ids.is_empty() {
+        return Ok(vec![]);
+    }
+    
+    let pool = create_pool().await?;
+    let people = sqlx::query_as!(
+        LostPeople,
+        r#"
+        select 
+            id, fullname, alias, gender, born_date, last_condition, is_found, lost_date, found_date
+        from lost_people
+        where id = any($1)
+        "#,
+        &person_ids
+    )
+    .fetch_all(&pool)
+    .await?;
+    Ok(people)
+}
