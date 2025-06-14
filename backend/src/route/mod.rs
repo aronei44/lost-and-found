@@ -22,7 +22,8 @@ use crate::{
             get_photos_with_lost_by_username_handler,
             upload_photo_handler,
             recognize_target_handler
-        }
+        },
+        ws_handler::ws_handler
     },
     helper::auth::authorization_middleware
 };
@@ -64,4 +65,5 @@ pub fn routes() -> Router {
             .route("/founder/{current_user}", get(get_founder_by_username_handler))
             .layer(middleware::from_fn(authorization_middleware))
     )
+    .route("/stream", get(ws_handler))
 }

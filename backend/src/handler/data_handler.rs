@@ -9,7 +9,7 @@ use crate::model::photo_data_model::{CollectedField, CreatePhotoData, FileWithLo
 use crate::model::photo_model::{CreatePhoto, Photo, PhotoWithLostPeople};
 use crate::model::place_model::{CreatePlace, Place};
 use crate::data::photos_data::{create_photo, create_photo_data, get_photos_by_person_id, get_places_by_person_id, get_photos_by_person_id_and_place_id, get_photos_with_lost_by_username, create_place};
-use crate::data::lost_people_data::{get_lost_people_data_with_ids};
+use crate::data::lost_people_data::{get_lost_people_data_with_ids, get_user_by_lost_people_id};
 use axum::extract::{
     Extension,
     Multipart,
@@ -21,6 +21,7 @@ use mime;
 use serde_json::Value;
 use crate::helper::db::create_pool;
 use serde::{Serialize, Deserialize};
+use crate::model::ws_model::AppState;
 
 
 #[utoipa::path(
@@ -301,6 +302,7 @@ pub struct RecoginizedResponse {
 )]
 pub async fn recognize_target_handler(
     Extension(user): Extension<User>,
+    Extension(state): Extension<AppState>,
     mut multipart: Multipart,
 ) -> Result<Json<RecoginizedResponse>, (StatusCode, String)> {
     let mut longitude = String::from("0.0"); // Placeholder, replace with actual logic to get longitude
@@ -408,6 +410,14 @@ pub async fn recognize_target_handler(
                     ));
                 }
             };
+            // Call the socket to notify users about the recognition
+            if let Err(e) = call_socket(state, &recognized_persons).await {
+                tracing::error!("Failed to call socket: {}", e);
+                // return Err((
+                //     StatusCode::INTERNAL_SERVER_ERROR,
+                //     format!("Failed to call socket: {}", e),
+                // ));
+            }
             let returnobject = RecoginizedResponse {
                 bucket: bucket.to_string(),
                 recognized: recognized_persons,
@@ -423,4 +433,29 @@ pub async fn recognize_target_handler(
         }
     }
 
+}
+
+
+async fn call_socket(
+    state: AppState,
+    lost_people: &Vec<LostPeople>,
+) -> Result<(), String> {
+
+    for person in lost_people {
+        let users = get_user_by_lost_people_id(&person.id).await.map_err(|e| e.to_string())?;
+        for user in users {
+            if let Some(tx) = state.user_sockets.lock().unwrap().get(&user.user_username) {
+                let message = serde_json::json!({
+                    "type": "recognition",
+                    "data": person,
+                });
+                if tx.send(axum::extract::ws::Message::Text(message.to_string().into())).is_err() {
+                    tracing::error!("Failed to send message to user: {}", user.user_username);
+                }
+            } else {
+                tracing::warn!("No socket found for user: {}", user.user_username);
+            }
+        }
+    }
+    Ok(())
 }

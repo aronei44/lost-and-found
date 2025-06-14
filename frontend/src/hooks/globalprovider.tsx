@@ -10,6 +10,8 @@ import LostPeopleAll from '@/components/LostPeopleAll';
 import LostPeopleMonitored from '@/components/LostPeopleMonitored';
 import PhotoButton from '@/components/PhotoButton';
 import Camera from '@/components/Camera';
+import { serverKey } from './useServerKey';
+import ModalComponent from '@/components/Modal';
 
 type GlobalState = {
     state: {
@@ -76,6 +78,13 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         refreshToken: ''
     })
     const [cameraModal, setCameraModal] = useState<boolean>(false);
+    const [messageModal, setMessageModal] = useState<boolean>(false);
+    const [messages, setMessages] = useState<Array<{
+        alias: string,
+        fullname: string,
+        is_read: boolean,
+        date: Date
+    }>>([]);
 
     const getComponent = (state: string) => {
         const components : Record<string, React.ReactElement> = {
@@ -160,6 +169,51 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
     }, []);
 
 
+    const streaming = async () => {
+        try {
+            let baseUrl = await serverKey("API_BASE_URL");
+            baseUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://");
+            const url = `${baseUrl}/api/stream?token=${token.accessToken}`;
+            const socket = new WebSocket(url);
+            socket.onopen = () => {
+                console.log("WebSocket connection established");
+            }
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "recognition") {
+                    const person = data.data ?? {};
+                    if (person.alias && person.fullname) {
+                        setMessages(prevMessages => [{
+                            alias: person.alias,
+                            fullname: person.fullname,
+                            is_read: false,
+                            date: new Date()
+                        }, ...prevMessages]);
+                    }
+                }
+            }
+            socket.onclose = () => {
+                console.log("WebSocket closed, retrying in 1s");
+                setTimeout(streaming, 1000);
+            }
+
+            socket.onerror = (err) => {
+                console.error("WebSocket error", err);
+                socket.close();
+            }
+        } catch (error) {
+            console.error("Error in streaming:", error);
+        }
+    }
+
+    useEffect(() => {
+        if (authenticated && token.accessToken) {
+            streaming();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authenticated, token.accessToken]);
+
+
     const context = useMemo(() => {
         return {
             state: {
@@ -183,16 +237,41 @@ export function GlobalProvider(p: Readonly<React.PropsWithChildren>) {
         >
             {p.children}
             {authenticated && (
-                <PhotoButton
-                    onClick={() => setCameraModal(true)}
-                >
-                    <div className='text-2xl'>+</div>
-                </PhotoButton>
+                <>
+                    <PhotoButton
+                        onClick={() => setCameraModal(true)}
+                    >
+                        <div className='text-2xl'>+</div>
+                    </PhotoButton>
+                    <PhotoButton
+                        onClick={() => setMessageModal(true)}
+                        scale_right={2}
+                    >
+                        <div className='text-xl'>{messages.filter(m => !m.is_read).length}</div>
+                    </PhotoButton>
+                </>
             )}
             <Camera
                 show={cameraModal}
                 setShow={setCameraModal}
             />
+            <ModalComponent
+                show={messageModal}
+                onClose={() => {
+                    setMessageModal(false);
+                    setMessages(prevMessages => prevMessages.map(m => ({ ...m, is_read: true })));
+                }}
+                title="Messages"
+            >
+                <div className="max-h-[80vh] overflow-y-auto">
+                    {messages.map((message, index) => (
+                        <div key={index + 1} className={`p-4 ${message.is_read ? 'bg-gray-100' : 'bg-blue-100'} mb-4`}>
+                            <p>{message.fullname} ({message.alias}) ditemukan !!!</p>
+                            <span className="text-sm text-gray-500">{new Date(message.date).toLocaleString()}</span>
+                        </div>
+                    ))}
+                </div>
+            </ModalComponent>
         </GlobalContext.Provider>
     );
 }

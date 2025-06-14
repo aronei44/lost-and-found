@@ -21,6 +21,7 @@ pub struct CreatePhotoData {
 
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct CollectedField {
     pub name: Option<String>,
     pub file_name: Option<String>,
@@ -29,12 +30,14 @@ pub struct CollectedField {
 }
 
 #[derive(ToSchema)]
+#[allow(dead_code)]
 pub struct File_ {
     #[schema(value_type = String, format = Binary)]
     pub files: Vec<u8>
 }
 
 #[derive(ToSchema)]
+#[allow(dead_code)]
 pub struct FileWithLongLat {
     pub latitude: String,
     pub longitude: String,

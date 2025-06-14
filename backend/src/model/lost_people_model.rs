@@ -15,6 +15,12 @@ pub struct LostPeople {
     pub found_date: Option<chrono::NaiveDate>,
 }
 
+#[derive(Serialize, Deserialize, ToSchema, Debug, sqlx::FromRow, Clone)]
+pub struct MonitorPeople {
+    pub user_username: String,
+    pub lost_people_id: i32,
+}
+
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
 pub struct CreateLostPeopleRequest {
